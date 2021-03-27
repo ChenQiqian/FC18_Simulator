@@ -128,11 +128,11 @@ PlayerInfo::PlayerInfo(Json::Value json){
 	rank = json["rank"].asInt();
 	alive = json["alive"].asBool();
 	tower.clear();
-	for (int i = 0; i < json["tower"].size(); i++){
+	for (unsigned int i = 0; i < json["tower"].size(); i++){
 		tower.insert(json["tower"][i].asInt());
 	}
 	corps.clear();
-	for (int i = 0; i < json["corps"].size(); i++){
+	for (unsigned int i = 0; i < json["corps"].size(); i++){
 		corps.insert(json["corps"][i].asInt());
 	}
 }
@@ -140,6 +140,7 @@ Json::Value PlayerInfo::asJson() const{
 	Json::Value result;
 	result["id"] = id;
 	result["rank"] = rank;
+	result["score"] = score;
 	result["alive"] = alive;
 
 	Json::Value towerArray;
@@ -163,11 +164,11 @@ mapBlock::mapBlock(Json::Value json){
 	owner = terrainType(json["owner"].asInt());
 	TowerIndex = terrainType(json["TowerIndex"].asInt());
 	occupyPoint.clear();
-	for (int i = 0; i < json["occupyPoint"].size(); i++){
+	for (unsigned int i = 0; i < json["occupyPoint"].size(); i++){
 		occupyPoint.push_back(json["occupyPoint"][i].asInt());
 	}
 	corps.clear();
-	for (int i = 0; i < json["corps"].size(); i++){
+	for (unsigned int i = 0; i < json["corps"].size(); i++){
 		corps.push_back(json["corps"][i].asInt());
 	}
 }
@@ -176,7 +177,7 @@ Json::Value mapBlock::asJson() const{
 	result["type"] = type;
 	
 	Json::Value occupyPointArray;
-	for (int i = 0; i < occupyPoint.size(); i++){
+	for (unsigned int i = 0; i < occupyPoint.size(); i++){
 		occupyPointArray.append(occupyPoint[i]);
 	}
 	result["occupyPoint"] = occupyPointArray;
@@ -184,7 +185,7 @@ Json::Value mapBlock::asJson() const{
 	result["TowerIndex"] = TowerIndex;
 	
 	Json::Value corpsArray;
-	for (int i = 0; i < corps.size(); i++){
+	for (unsigned int i = 0; i < corps.size(); i++){
 		corpsArray.append(corps[i]);
 	}
 	result["corps"] = corpsArray;
@@ -196,7 +197,7 @@ Command::Command(Json::Value json){
 	cmdType = commandType(json["cmdType"].asInt());
 	
 	parameters.clear();
-	for (int i = 0; i < json["parameters"].size(); i++){
+	for (unsigned int i = 0; i < json["parameters"].size(); i++){
 		parameters.push_back(json["parameters"][i].asInt());
 	}
 }
@@ -204,7 +205,7 @@ Json::Value Command::asJson() const{
 	Json::Value result;
 	result["cmdType"] = cmdType;
 	Json::Value paramArray;
-	for (int i = 0; i < parameters.size(); i++){
+	for (unsigned int i = 0; i < parameters.size(); i++){
 		paramArray.append(parameters[i]);
 	}
 	result["parameters"] = paramArray;
@@ -214,13 +215,13 @@ Json::Value Command::asJson() const{
 
 CommandList::CommandList(Json::Value json){
 	m_commands.clear();
-	for (int i = 0; i < json.size(); i++){
+	for (unsigned int i = 0; i < json.size(); i++){
 		m_commands.push_back(Command(json[i]));
 	}
 }
 Json::Value CommandList::asJson() const{
 	Json::Value commandArray;
-	for (int i = 0; i < m_commands.size(); i++){
+	for (unsigned int i = 0; i < m_commands.size(); i++){
 		commandArray.append(m_commands[i].asJson());
 	}
 	return commandArray;
@@ -237,24 +238,24 @@ Info::Info(Json::Value json):
 	myCommandList(json["myCommandList"])
 {
 	playerInfo.clear();
-	for (int i = 0; i < json["playerInfo"].size(); i++){
+	for (unsigned int i = 0; i < json["playerInfo"].size(); i++){
 		playerInfo.push_back(PlayerInfo(json["playerInfo"][i]));
 	}
 
 	towerInfo.clear();
-	for (int i = 0; i < json["towerInfo"].size(); i++){
+	for (unsigned int i = 0; i < json["towerInfo"].size(); i++){
 		towerInfo.push_back(TowerInfo(json["towerInfo"][i]));
 	}
 
 	corpsInfo.clear();
-	for (int i = 0; i < json["corpsInfo"].size(); i++){
+	for (unsigned int i = 0; i < json["corpsInfo"].size(); i++){
 		corpsInfo.push_back(CorpsInfo(json["corpsInfo"][i]));
 	}
 
 	vector<vector<mapBlock>>* gameMapInfoArray = new vector<vector<mapBlock>>;
-	for (int i = 0; i < json["gameMapInfo"].size(); i++){
+	for (unsigned int i = 0; i < json["gameMapInfo"].size(); i++){
 		vector<mapBlock> gameMapInfoArrayInside;
-		for (int j = 0; j < json["gameMapInfo"][i].size(); j++){
+		for (unsigned int j = 0; j < json["gameMapInfo"][i].size(); j++){
 			gameMapInfoArrayInside.push_back(mapBlock(json["gameMapInfo"][i][j]));
 		}
 		gameMapInfoArray->push_back(gameMapInfoArrayInside);
@@ -273,30 +274,30 @@ Json::Value Info::asJson() const{
 	
 
 	Json::Value playerArray;
-	for (int i = 0; i < playerInfo.size(); i++){
+	for (unsigned int i = 0; i < playerInfo.size(); i++){
 		playerArray.append(playerInfo[i].asJson());
 	}
 	result["playerInfo"] = playerArray;
 
 
 	Json::Value towerArray;
-	for (int i = 0; i < towerInfo.size(); i++){
+	for (unsigned int i = 0; i < towerInfo.size(); i++){
 		towerArray.append(towerInfo[i].asJson());
 	}
 	result["towerInfo"] = towerArray;
 	
 
 	Json::Value corpsArray;
-	for (int i = 0; i < corpsInfo.size(); i++){
+	for (unsigned int i = 0; i < corpsInfo.size(); i++){
 		corpsArray.append(corpsInfo[i].asJson());
 	}
 	result["corpsInfo"] = corpsArray;
 
 
 	Json::Value gameMapArray;
-	for (int i = 0; i < (*gameMapInfo).size(); i++){
+	for (unsigned int i = 0; i < (*gameMapInfo).size(); i++){
 		Json::Value gameMapArrayInside;
-		for (int j = 0; j < (*gameMapInfo)[i].size(); j++){
+		for (unsigned int j = 0; j < (*gameMapInfo)[i].size(); j++){
 			gameMapArrayInside.append(((*gameMapInfo)[i][j]).asJson());
 		}
 		gameMapArray.append(gameMapArrayInside);
