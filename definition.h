@@ -1226,7 +1226,8 @@ class Game : public Info {
             TowerInitConfig[tower.level - 1].initHealthPoint;
         tower.healthPoint =
             max(tower.healthPoint + int(double(1) / 3 * maxHealth), maxHealth);
-        corps.BuildPoint -= 1 if(corps.BuildPoint <= 0) {
+        corps.BuildPoint -= 1 ;
+        if(corps.BuildPoint <= 0) {
             deadCorps(corps.ID);
         }
     }
