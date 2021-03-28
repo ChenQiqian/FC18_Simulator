@@ -1,4 +1,4 @@
-#include "definition.h"
+#include "game/game.h"
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>

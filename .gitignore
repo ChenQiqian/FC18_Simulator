@@ -1,2 +1,5 @@
 *.o
 *.exe
+logs/
+info.json
+command.json
