@@ -20,6 +20,7 @@
 #include <iostream>
 #include <cassert>
 #include <cmath>
+#include "color.h"
 #include "json/json.h"
 
 using namespace std;
@@ -448,7 +449,9 @@ public:
         level(_l),
         haveDoneCommand(false)
 	{
-
+        for(int i = 0;i<TOWER_PRODUCT_TASK_NUM;i++){
+            pointsNeeded[i] = 0;
+        }
 	}
 	TowerInfo(Json::Value);       // 从Json对象构造 —— swm_sxt
     
@@ -1377,7 +1380,7 @@ class Game : public Info {
                         maxPlayer = pid;
                         draw      = 0;
                     }
-                    else if(cell.occupyPoint[pid] == maxPoint) {
+                    else if(cell.occupyPoint[pid - 1] == maxPoint) {
                         draw = 1;
                     }
                 }
@@ -1441,6 +1444,30 @@ class Game : public Info {
         updateProduct(playerID);
         updateInfo();
         return asJson();
+    }
+    void print() {
+        for(int i = 0; i < m_height; i++) {
+            for(int j = 0; j < m_width; j++) {
+                string output;
+                if(block({i, j}).owner == 1) {
+                    output = L_RED;
+                }
+                if(block({i, j}).owner == 2) {
+                    output = L_GREEN;
+                }
+                if(block({i, j}).owner == 3) {
+                    output = L_BLUE;
+                }
+                if(block({i, j}).owner == 4) {
+                    output = L_PURPLE;
+                }
+                output = output + "%4d" + NONE;
+                printf(output.c_str(), block({i, j}).TowerIndex);
+            }
+            printf("\n");
+        }
+        printf("\nPress enter to continue");
+        getchar();
     }
 };
 

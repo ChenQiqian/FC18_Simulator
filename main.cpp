@@ -1,17 +1,17 @@
 #include "definition.h"
-#include <fstream>
 #include <algorithm>
-#include <iostream>
-#include <cstdlib>
 #include <cstdio>
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
 using namespace std;
 
 Game *g;
 
 int main(int argc, char **argv) {
     int id = time(0), w = 15, h = 15, p = 4;
-    if(argc != 1){
-        sscanf(argv[1],"%d",id);
+    if(argc != 1) {
+        sscanf(argv[1], "%d", &id);
     }
     g = new Game(w, h, p, id);
     string f[p], js[2];
@@ -42,8 +42,12 @@ int main(int argc, char **argv) {
     string           commandString;
     Json::FastWriter writer;
     Json::Reader     reader;
-    for(int i = 0; i < 30; i++) {
-        cerr << "Round " << i << ":" << endl; 
+    for(int i = 0; i < 100; i++) {
+        cerr << "Round " << i << ":" << endl;
+        string _t = "echo \"round " + to_string(i) + ":\" >> logs/game" +
+            to_string(id) + "/command.json";
+        system(_t.c_str());
+
         for(int _p = 1; _p <= p; _p++) {
             g->totalRounds++;
             g->myID = _p;
@@ -67,21 +71,28 @@ int main(int argc, char **argv) {
             Json::Value commandJson;
             reader.parse(commandString.data(), commandJson);
             cList = commandJson;
-            g->play(_p,cList);
+            g->play(_p, cList);
 
             // save info and command
 
             string tmp;
-            tmp = "cat " + js[0] + " >> logs/game" + to_string(id) + "/info.json"; 
+            tmp =
+                "cat " + js[0] + " >> logs/game" + to_string(id) + "/info.json";
             // cerr << "save info: " << tmp << endl;
             // system(tmp.c_str());
-            tmp = "cat " + js[1] + " >> logs/game" + to_string(id) + "/command.json"; 
+            tmp = "echo \"player " + to_string(_p) + ":\" >> logs/game" +
+                to_string(id) + "/command.json";
+            system(tmp.c_str());
+            tmp = "cat " + js[1] + " >> logs/game" + to_string(id) +
+                "/command.json";
             // cerr << "save command: " << tmp << endl;
             system(tmp.c_str());
         }
+        g->print();
         cerr << "\tScore: ";
-        for(int _p = 1;_p <= p;_p++){
-            cerr << "player " << _p << " " << g->playerInfo[_p-1].score << "; ";
+        for(int _p = 1; _p <= p; _p++) {
+            cerr << "player " << _p << " " << g->playerInfo[_p - 1].score
+                 << "; ";
         }
         cerr << endl;
         // break;
