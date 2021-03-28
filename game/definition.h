@@ -488,6 +488,9 @@ public:
         if(type == Battle){
             healthPoint = battleHealthPoint[m_BattleType][0];
         }
+		else{
+			healthPoint = -1;
+		}
         refresh();     
     };					// 空构造函数 —— swm_sxt
     
