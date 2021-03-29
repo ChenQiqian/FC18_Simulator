@@ -11,6 +11,21 @@ Game::Game(TMap _width, TMap _height, TPlayer _players, int _id)
     updateTerrain();
     updatePlayer();
 }
+// load files as a start,
+Game::Game(Json::Value json, bool game = 1) : Info(json) {
+    if(game == 0)
+        return;
+    id = -1;
+    m_width = m_height = 15;
+    // Json::Value &_towervalue = json["towerInfo"];
+    // for(unsigned int i = 0; i < _towervalue.size(); i++) {
+    //     Json::Value &PointsNeeded = _towervalue["PointsNeeded"];
+    //     for(int j = 0; j < TOWER_PRODUCT_TASK_NUM; j++) {
+    //         towerInfo[i].pointsNeeded[j] = PointsNeeded[j].asInt();
+    //     }
+    // }
+}
+
 Game::~Game() {}
 //【FC18】获取地图宽度
 TMap Game::getWidth() const {
@@ -28,24 +43,20 @@ void Game::generateMap() {
             int t = rand() % 5 + 1;
             switch(t) {
                 case 1:
-                    _tmp_column.push_back(
-                        mapBlock(TRPlain, PUBLIC, NOTOWER));
+                    _tmp_column.push_back(mapBlock(TRPlain, PUBLIC, NOTOWER));
                     break;
                 case 2:
                     _tmp_column.push_back(
                         mapBlock(TRMountain, PUBLIC, NOTOWER));
                     break;
                 case 3:
-                    _tmp_column.push_back(
-                        mapBlock(TRForest, PUBLIC, NOTOWER));
+                    _tmp_column.push_back(mapBlock(TRForest, PUBLIC, NOTOWER));
                     break;
                 case 4:
-                    _tmp_column.push_back(
-                        mapBlock(TRSwamp, PUBLIC, NOTOWER));
+                    _tmp_column.push_back(mapBlock(TRSwamp, PUBLIC, NOTOWER));
                     break;
                 case 5:
-                    _tmp_column.push_back(
-                        mapBlock(TRRoad, PUBLIC, NOTOWER));
+                    _tmp_column.push_back(mapBlock(TRRoad, PUBLIC, NOTOWER));
                     break;
                 default: assert(0); break;
             }
@@ -70,7 +81,7 @@ void Game::generateTower() {
     addTower(4, TPoint({10 + rand() % 5, 10 + rand() % 5}));
 }
 // 获取地图上的一个 block
-mapBlock & Game::block(TPoint p) {
+mapBlock &Game::block(TPoint p) {
     return gameMap[p.m_y][p.m_x];
 }
 // 辅助判定函数
@@ -91,10 +102,10 @@ bool Game::isMyCell(TPlayerID pid, TPoint p) {
 }
 // 辅助计算函数
 int Game::needMoveCost(TPoint a, TPoint b) {
-    return ceil(double(CorpsMoveCost[block(a).type] +
-                        CorpsMoveCost[block(b).type]) /
-                    2 -
-                1e-6);
+    return ceil(
+        double(CorpsMoveCost[block(a).type] + CorpsMoveCost[block(b).type]) /
+            2 -
+        1e-6);
 }
 int Game::countCorpsNum(TPlayerID pid, corpsType type) {
     int ans = 0;
@@ -195,9 +206,9 @@ void Game::changeTowerLevel(TTowerID tid, TLevel tarLevel, bool fullBlood) {
     if(!fullBlood)
         tower.healthPoint =
             floor(double(tower.healthPoint) /
-                        TowerInitConfig[tower.level - 1].initHealthPoint *
-                        TowerInitConfig[tarLevel - 1].initHealthPoint +
-                    1e-6);
+                      TowerInitConfig[tower.level - 1].initHealthPoint *
+                      TowerInitConfig[tarLevel - 1].initHealthPoint +
+                  1e-6);
     else
         tower.healthPoint = TowerInitConfig[tarLevel - 1].initHealthPoint;
     tower.level = tarLevel;
@@ -257,6 +268,7 @@ void Game::towerProduct(TowerInfo &tower) {
     if(tower.pdtType == NOTASK)
         return;
     tower.pointsNeeded[tower.pdtType] -= tower.productPoint;
+    // cerr << tower.pdtType << " points:" << tower.pointsNeeded[tower.pdtType] << endl;
     if(tower.pointsNeeded[tower.pdtType] > 0) {
         return;
     }
@@ -280,8 +292,7 @@ void Game::towerProduct(TowerInfo &tower) {
             break;
         case PBuilder:
         case PExplorer:
-            if(countCorpsNum(tower.ownerID, Construct) >=
-                MAX_CONSTRUCT_NUM) {
+            if(countCorpsNum(tower.ownerID, Construct) >= MAX_CONSTRUCT_NUM) {
                 return;
             }
             if(tower.pdtType == PExplorer) {
@@ -342,20 +353,20 @@ void Game::towerAttackCorps(TowerInfo &tower, const vector<int> &par) {
 }
 // 兵团相关命令
 void Game::corpsMove(CorpsInfo &corps, const vector<int> &par) {
-    const static TPoint mp[4] = {{0, -1}, {0, 1}, {-1, 0}, {0, 1}};
+    const static TPoint mp[4] = {{0, -1}, {0, 1}, {-1, 0}, {1, 0}};
     TPoint              pos = corps.pos, dest = corps.pos + mp[par[2]];
     if(!isPosValid(dest)) {
         return;
     }
     if(block(dest).TowerIndex != -1 &&
-        !isMyTower(corps.owner, block(dest).TowerIndex)) {
+       !isMyTower(corps.owner, block(dest).TowerIndex)) {
         return;
     }
     if(block(dest).TowerIndex == -1 && block(dest).corps.size() >= 2) {
         return;
     }
     if(block(dest).TowerIndex == -1 && block(dest).corps.size() == 1 &&
-        (!isMyCorps(corps.owner, block(dest).corps[0]) ||
+       (!isMyCorps(corps.owner, block(dest).corps[0]) ||
         corpsInfo[block(dest).corps[0]].type == corps.type)) {
         return;
     }
@@ -392,8 +403,8 @@ void Game::corpsAttackCorps(CorpsInfo &corps, const vector<int> &par) {
         return;
     }
     if(block(tar.pos).TowerIndex != -1) {
-        corpsAttackTower(
-            corps, {CAttackTower, corps.ID, block(tar.pos).TowerIndex});
+        corpsAttackTower(corps,
+                         {CAttackTower, corps.ID, block(tar.pos).TowerIndex});
         return;
     }
     if(tar.type == Construct) {
@@ -409,8 +420,8 @@ void Game::corpsAttackCorps(CorpsInfo &corps, const vector<int> &par) {
     else if(tar.type == Battle) {
         TDoublePara fa = getCorpsForce(corps), fb = getCorpsForce(tar);
         TDoublePara myHealthLost  = (corps.m_BattleType == Archer ?
-                                            0 :
-                                            (28 * exp(0.04 * (fb - fa)))),
+                                         0 :
+                                         (28 * exp(0.04 * (fb - fa)))),
                     tarHealthLost = (30 * exp(0.04 * (fa - fb)));
         corps.healthPoint -= myHealthLost;
         if(corps.healthPoint < 0) {
@@ -450,7 +461,7 @@ void Game::corpsAttackTower(CorpsInfo &corps, const vector<int> &par) {
                                     (28 * exp(0.04 * (fb - fa)))),
                 tarHealthLost =
                     (30 * corpsAttackTowerGain[corps.m_BattleType][0] *
-                        exp(0.04 * (fa - fb)));
+                     exp(0.04 * (fa - fb)));
     corps.healthPoint -= myHealthLost;
     if(corps.healthPoint < 0) {
         deadCorps(corps.ID);
@@ -497,9 +508,8 @@ void Game::corpsRepair(CorpsInfo &corps, const vector<int> &par) {
     if(tid == -1 || !isMyTower(corps.owner, tid)) {
         return;
     }
-    TowerInfo &  tower = towerInfo[tid];
-    THealthPoint maxHealth =
-        TowerInitConfig[tower.level - 1].initHealthPoint;
+    TowerInfo &  tower     = towerInfo[tid];
+    THealthPoint maxHealth = TowerInitConfig[tower.level - 1].initHealthPoint;
     tower.healthPoint =
         max(tower.healthPoint + int(double(1) / 3 * maxHealth), maxHealth);
     corps.BuildPoint -= 1;
@@ -543,9 +553,7 @@ void Game::doCommand(TPlayerID playerID, Command &todoCmd) {
             return;
         }
         switch(todoCmd.parameters[0]) {
-            case TProduct:
-                addtowerProduct(tower, todoCmd.parameters);
-                break;
+            case TProduct: addtowerProduct(tower, todoCmd.parameters); break;
             case TAttackCorps:
                 towerAttackCorps(tower, todoCmd.parameters);
                 break;
@@ -583,7 +591,8 @@ void Game::doCommand(TPlayerID playerID, Command &todoCmd) {
     }
 }
 // 为第 id 用户执行 todoCommandList, 更新到 Info 当中
-void Game::operateCommandList(TPlayerID playerID, CommandList &todoCommandList) {
+void Game::operateCommandList(TPlayerID    playerID,
+                              CommandList &todoCommandList) {
     for(Command todoCommand : todoCommandList) {
         doCommand(playerID, todoCommand);
     }
@@ -596,8 +605,11 @@ void Game::updateProduct(TPlayerID pid) {
             continue;
         if(!tower.exist)
             continue;
+        // cerr<< "producted" << tower.ID << " ";
         towerProduct(tower);
     }
+    // cerr << endl;
+
 }
 // 维护地形。
 void Game::updateTerrain() {
@@ -697,38 +709,38 @@ void Game::updateInfo() {
     updatePlayer();
 }
 // 从给出的 info 和 当前的 gamemap 更新 gamemap
-void Game::updateFromInfo(const Info &info){
+void Game::updateFromInfo(const Info &info) {
     totalPlayers = info.totalPlayers;
-    playerAlive = info.playerAlive;
-    totalRounds = info.totalRounds;
-    totalTowers = info.totalTowers;
-    totalCorps = info.totalCorps;
-    myID = info.myID; // 应该不需要这个
-    playerInfo = info.playerInfo;
-    corpsInfo = info.corpsInfo;
+    playerAlive  = info.playerAlive;
+    totalRounds  = info.totalRounds;
+    totalTowers  = info.totalTowers;
+    totalCorps   = info.totalCorps;
+    myID         = info.myID;  // 应该不需要这个
+    playerInfo   = info.playerInfo;
+    corpsInfo    = info.corpsInfo;
     // towerInfo 需要特殊处理！
     // 以下代码很可能有 bug
-    gameMap = *(info.gameMapInfo);
+    gameMap                        = *(info.gameMapInfo);
     vector<TowerInfo> tmpTowerInfo = info.towerInfo;
-    for(size_t i = 0; i < tmpTowerInfo.size(); i++){
+    for(size_t i = 0; i < tmpTowerInfo.size(); i++) {
         TowerInfo &_tower = tmpTowerInfo[i];
-        if(i < towerInfo.size()){
+        if(i < towerInfo.size()) {
             TowerInfo &_old = towerInfo[i];
             assert(_old.ID == _tower.ID);
-            for(int i = 0;i < TOWER_PRODUCT_TASK_NUM;i++){
+            for(int i = 0; i < TOWER_PRODUCT_TASK_NUM; i++) {
                 _tower.pointsNeeded[i] = _old.pointsNeeded[i];
             }
-            if(_tower.ownerID != _old.ownerID){
+            if(_tower.ownerID != _old.ownerID) {
                 _tower.deleteTask();
             }
-            else{
-                if(_tower.pdtType != _old.pdtType && _old.pdtType != -1){// 这一回合就做了 _old.pdtType 的工作
-                    _tower.pointsNeeded[_old.pdtType] = 0;// 干完了
+            else {
+                if(_tower.pdtType != _old.pdtType &&
+                   _old.pdtType != -1) {  // 这一回合就做了 _old.pdtType 的工作
+                    _tower.pointsNeeded[_old.pdtType] = 0;  // 干完了
                 }
             }
-
         }
-        _tower.pointsNeeded[_tower.pdtType] = _tower.productConsume;              
+        _tower.pointsNeeded[_tower.pdtType] = _tower.productConsume;
     }
     towerInfo = tmpTowerInfo;
 }
@@ -771,4 +783,20 @@ void Game::print() {
     }
     printf("\nPress enter to continue");
     getchar();
+}
+Json::Value Game::asJson() {
+    Json::Value result = Info::asJson();
+    // // 主要是要保存塔的附加信息 ?
+    // // 还有没有其他的乱七八糟的附加信息？
+    Json::Value _towervalue = result["towerInfo"];
+    result.removeMember("towerInfo");
+    for(unsigned int i = 0; i < _towervalue.size(); i++) {
+        Json::Value PointsNeeded;
+        for(int j = 0; j < TOWER_PRODUCT_TASK_NUM; j++) {
+            PointsNeeded.append(towerInfo[i].pointsNeeded[j]);
+        }
+        _towervalue[i]["PointsNeeded"] = PointsNeeded;
+    }
+    result["towerInfo"] = _towervalue;
+    return result;
 }

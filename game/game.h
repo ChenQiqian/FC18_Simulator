@@ -12,6 +12,7 @@ class Game : public Info {
 
   public:
     Game(TMap _width, TMap _height, TPlayer _players, int _id);
+    Game(Json::Value json, bool game);
     ~Game();
     //【FC18】获取地图宽度
     TMap getWidth() const;
@@ -67,6 +68,7 @@ class Game : public Info {
     void        refresh();
     Json::Value play(TPlayerID playerID, CommandList &todoCommandList);
     void        print();
+    Json::Value asJson();
 };
 
 #endif
