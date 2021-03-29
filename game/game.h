@@ -17,14 +17,10 @@ class Game : public Info {
     TMap getWidth() const;
     //【FC18】获取地图高度
     TMap getHeight() const;
-    // 生成地图的地形到 gameMap
-    void generateMap();
-    // 生成 playerInfo 数组
-    void generateUser();
-    // 生成地图上最初的四个塔. 调用 addTower函数。
-    void generateTower();
-    // 获取地图上的一个 block
-    mapBlock &block(TPoint p);
+    void generateMap();   // 生成地图的地形到 gameMap
+    void generateUser();  // 生成 playerInfo 数组
+    void generateTower();  // 生成地图上最初的四个塔. 调用 addTower函数。
+    mapBlock &block(TPoint p);  // 获取地图上的一个 block
     // 辅助判定函数
     bool isPosValid(TPoint p);
     bool isPosValid(int x, int y);
@@ -61,15 +57,12 @@ class Game : public Info {
     // 为第 id 用户执行 todoCommandList, 更新到 Info 当中
     void operateCommandList(TPlayerID playerID, CommandList &todoCommandList);
     // 维护相关函数
-    void updateProduct(TPlayerID pid);
-    // 维护地形。
-    void updateTerrain();
-    // 更新 格子的归属。 全图更新，先都抹掉，再重新计算
-    void updateMapOwner();
-    // 更新玩家占领地盘和分数，判断玩家是否出局
-    void updatePlayer();
-    // 回合之后统一的update
-    void updateInfo();
+    void updateProduct(TPlayerID pid);  // 维护生产力
+    void updateTerrain();                // 维护地形。
+    void updateMapOwner();  // 更新格子的归属。 全图更新，先都抹掉，再重新计算
+    void updatePlayer();  // 更新玩家占领地盘和分数，判断玩家是否出局
+    void updateInfo();  // 回合之后统一的update
+    void updateFromInfo(const Info &info);
     // 刷新兵团建设力和行动力
     void        refresh();
     Json::Value play(TPlayerID playerID, CommandList &todoCommandList);

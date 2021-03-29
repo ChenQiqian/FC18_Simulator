@@ -260,6 +260,7 @@ Info::Info(Json::Value json):
 		}
 		gameMapInfoArray->push_back(gameMapInfoArrayInside);
 	}
+	deleteAble = true;
 	gameMapInfo = gameMapInfoArray;
 }
 Json::Value Info::asJson() const{

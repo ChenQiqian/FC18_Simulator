@@ -1,5 +1,5 @@
 TARGET = worker.exe
-COMPILER = g++-10 -std=c++11 -g
+COMPILER = g++-10 -std=c++11 -O2 -Wall
 
 target : $(TARGET)
 

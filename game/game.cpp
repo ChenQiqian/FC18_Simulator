@@ -228,6 +228,7 @@ void Game::getTower(TTowerID tid, TPlayerID pid) {
     playerInfo[pid - 1].tower.insert(tid);
     block(tower.pos).type = TRTower;
     changeTowerLevel(tid, tower.level - 4, 1);
+    tower.deleteTask();
     updateMapOwner();
 }
 // 塔相关的命令
@@ -422,11 +423,11 @@ void Game::corpsAttackCorps(CorpsInfo &corps, const vector<int> &par) {
                 getCorps(block(tar.pos).corps[0], corps.owner);
             }
         }
-        corps.movePoint = 0;
     }
     else {
         assert(0);
     }
+    corps.movePoint = 0;
 }
 void Game::corpsAttackTower(CorpsInfo &corps, const vector<int> &par) {
     TTowerID tarID = par[2];
@@ -502,6 +503,7 @@ void Game::corpsRepair(CorpsInfo &corps, const vector<int> &par) {
     tower.healthPoint =
         max(tower.healthPoint + int(double(1) / 3 * maxHealth), maxHealth);
     corps.BuildPoint -= 1;
+    corps.movePoint = 0;
     if(corps.BuildPoint <= 0) {
         deadCorps(corps.ID);
     }
@@ -520,6 +522,7 @@ void Game::corpsChangeTerrain(CorpsInfo &corps, const vector<int> &par) {
         _gameMap_backup[corps.pos.m_y][corps.pos.m_x].type = TRPlain;
     }
     corps.BuildPoint -= 1;
+    corps.movePoint = 0;
     if(corps.BuildPoint <= 0) {
         deadCorps(corps.ID);
     }
@@ -692,6 +695,42 @@ void Game::updateInfo() {
     // lots of things to do .
     updateTerrain();
     updatePlayer();
+}
+// 从给出的 info 和 当前的 gamemap 更新 gamemap
+void Game::updateFromInfo(const Info &info){
+    totalPlayers = info.totalPlayers;
+    playerAlive = info.playerAlive;
+    totalRounds = info.totalRounds;
+    totalTowers = info.totalTowers;
+    totalCorps = info.totalCorps;
+    myID = info.myID; // 应该不需要这个
+    playerInfo = info.playerInfo;
+    corpsInfo = info.corpsInfo;
+    // towerInfo 需要特殊处理！
+    // 以下代码很可能有 bug
+    gameMap = *(info.gameMapInfo);
+    vector<TowerInfo> tmpTowerInfo = info.towerInfo;
+    for(size_t i = 0; i < tmpTowerInfo.size(); i++){
+        TowerInfo &_tower = tmpTowerInfo[i];
+        if(i < towerInfo.size()){
+            TowerInfo &_old = towerInfo[i];
+            assert(_old.ID == _tower.ID);
+            for(int i = 0;i < TOWER_PRODUCT_TASK_NUM;i++){
+                _tower.pointsNeeded[i] = _old.pointsNeeded[i];
+            }
+            if(_tower.ownerID != _old.ownerID){
+                _tower.deleteTask();
+            }
+            else{
+                if(_tower.pdtType != _old.pdtType && _old.pdtType != -1){// 这一回合就做了 _old.pdtType 的工作
+                    _tower.pointsNeeded[_old.pdtType] = 0;// 干完了
+                }
+            }
+
+        }
+        _tower.pointsNeeded[_tower.pdtType] = _tower.productConsume;              
+    }
+    towerInfo = tmpTowerInfo;
 }
 // 刷新兵团建设力和行动力
 void Game::refresh() {

@@ -449,7 +449,7 @@ public:
         level(_l),
         haveDoneCommand(false)
 	{
-        for(int i = 0;i<TOWER_PRODUCT_TASK_NUM;i++){
+        for(int i = 0; i < TOWER_PRODUCT_TASK_NUM; i++){
             pointsNeeded[i] = 0;
         }
 	}
@@ -470,6 +470,14 @@ public:
     bool haveDoneCommand;
     TProductPoint pointsNeeded[TOWER_PRODUCT_TASK_NUM];
     // 0 代表没这个任务
+
+	void deleteTask(){
+		haveDoneCommand = false;
+		pdtType = NOTASK;
+        for(int i = 0; i < TOWER_PRODUCT_TASK_NUM; i++){
+            pointsNeeded[i] = 0;
+        }
+	}
 
     void refresh(){
         haveDoneCommand = false;
@@ -524,7 +532,7 @@ class PlayerInfo
 {
 public:
 	PlayerInfo(){};			 // 空构造函数 —— swm_sxt
-	PlayerInfo(TPlayerID _id) :id(_id), rank(_id),alive(true){
+	PlayerInfo(TPlayerID _id) :id(_id), rank(_id), score(0), alive(true){
 
 	}
 	PlayerInfo(Json::Value); // 从Json对象构造 —— swm_sxt
@@ -696,9 +704,14 @@ public:
 	Info(TPlayer initatePlayers) : 
         totalPlayers(initatePlayers), 
         playerAlive(initatePlayers) {
-
+			deleteAble = false;
 	};			  // 空构造函数 —— swm_sxt
 	Info(Json::Value);	  // 从Json对象构造 —— swm_sxt
+	~Info() {
+		if(deleteAble){
+			delete gameMapInfo;
+		}
+	}
 	TPlayer totalPlayers; //【FC18】总玩家数（4人）
 	TPlayer playerAlive;  //【FC18】剩余玩家数（还活着的）
 	TRound totalRounds;	  //【FC18】当前回合数（4个玩家依次执行一次操作为1回合，UI中是1个玩家执行操作记1回合）
@@ -722,6 +735,7 @@ public:
 	//【FC18】地图信息
 	//vector<vector<mapBlockInfo>> mapInfo;
 	//索引地图时 ，第一维为y坐标，第二维为x坐标，即gameMapInfo[y][x]表示（x,y）点的地图信息
+	bool deleteAble;
 	const vector<vector<mapBlock>> *gameMapInfo;
 
 	//转为Json对象 —— swm_sxt
