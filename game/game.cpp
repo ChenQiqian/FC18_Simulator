@@ -1,13 +1,24 @@
 #include "game.h"
 
-Game::Game() {}
-Game::Game(TMap _width, TMap _height, TPlayer _players, int _id)
+// Game::Game() {}
+Game::Game(TMap _width, TMap _height, TPlayer _players, int _id, bool gen)
     : Info(_players), id(_id), m_width(_width), m_height(_height) {
-    srand(id);
     gameMapInfo = &gameMap;
+    for(int j = 0; j < m_width; j++) {
+        vector<mapBlock> _tmp_column;
+        for(int i = 0; i < m_height; i++) {
+            _tmp_column.push_back(mapBlock(TRPlain, PUBLIC, NOTOWER));
+        }
+        gameMap.push_back(_tmp_column);
+    }
+    for(int pid = 1; pid <= _players; pid++) {
+        playerInfo.push_back(PlayerInfo(pid));
+    }
+    if(!gen)
+        return;
+    srand(id);
     generateMap();
-    _gameMap_backup = gameMap;
-    generateUser();
+    copyToBackup();
     generateTower();
     updateTerrain();
     updatePlayer();
@@ -52,37 +63,27 @@ TMap Game::getHeight() const {
 }
 // 生成地图的地形到 gameMap
 void Game::generateMap() {
-    for(int i = 0; i < m_width; i++) {
-        vector<mapBlock> _tmp_column;
-        for(int j = 0; j < m_height; j++) {
-            int t = rand() % 5 + 1;
-            switch(t) {
-                case 1:
-                    _tmp_column.push_back(mapBlock(TRPlain, PUBLIC, NOTOWER));
-                    break;
-                case 2:
-                    _tmp_column.push_back(
-                        mapBlock(TRMountain, PUBLIC, NOTOWER));
-                    break;
-                case 3:
-                    _tmp_column.push_back(mapBlock(TRForest, PUBLIC, NOTOWER));
-                    break;
-                case 4:
-                    _tmp_column.push_back(mapBlock(TRSwamp, PUBLIC, NOTOWER));
-                    break;
-                case 5:
-                    _tmp_column.push_back(mapBlock(TRRoad, PUBLIC, NOTOWER));
-                    break;
-                default: assert(0); break;
-            }
+    vector<vector<int>> _terr, _owner, _tower;
+    for(int j = 0; j < m_width; j++) {
+        _terr.push_back({});
+        _owner.push_back({});
+        _tower.push_back({});
+        for(int i = 0; i < m_height; i++) {
+            _terr.back().push_back(rand() % 5 + 1);
+            _owner.back().push_back(PUBLIC);
+            _tower.back().push_back(NOTOWER);
         }
-        gameMap.push_back(_tmp_column);
     }
+    generateMap(_terr, _owner, _tower);
 }
-// 生成 playerInfo 数组
-void Game::generateUser() {
-    for(TPlayerID pid = 1; pid <= totalPlayers; pid++) {
-        playerInfo.push_back({pid});
+void Game::generateMap(vector<vector<int>> terrain,
+                       vector<vector<int>> owner,
+                       vector<vector<int>> towerid) {
+    for(int j = 0; j < m_width; j++) {
+        for(int i = 0; i < m_height; i++) {
+            gameMap[j][i] = mapBlock(getTerrainEnum(terrain[j][i]), owner[j][i],
+                                     towerid[j][i]);
+        }
     }
 }
 // 生成地图上最初的四个塔. 调用 addTower函数。
@@ -97,6 +98,9 @@ void Game::generateTower() {
 }
 // 获取地图上的一个 block
 mapBlock &Game::block(TPoint p) {
+    return gameMap[p.m_y][p.m_x];
+}
+const mapBlock &Game::block(TPoint p) const {
     return gameMap[p.m_y][p.m_x];
 }
 // 辅助判定函数
@@ -734,6 +738,9 @@ void Game::updateInfo() {
     updateTerrain();
     updatePlayer();
 }
+void Game::copyToBackup() {
+    _gameMap_backup = gameMap;
+}
 // 从给出的 info 和 当前的 gamemap 更新 gamemap
 void Game::updateFromInfo(const Info &info) {
     totalPlayers = info.totalPlayers;
@@ -812,15 +819,92 @@ void Game::print() {
 }
 Json::Value Game::asJson() {
     Json::Value result = Info::asJson();
-    // 主要是要保存塔的附加信息 ?
-    // 还有没有其他的乱七八糟的附加信息？
-    Json::Value &_towervalue = result["towerInfo"];
+    // // 主要是要保存塔的附加信息 ?
+    // // 还有没有其他的乱七八糟的附加信息？
+    Json::Value _towervalue = result["towerInfo"];
+    result.removeMember("towerInfo");
     for(unsigned int i = 0; i < _towervalue.size(); i++) {
         Json::Value PointsNeeded;
         for(int j = 0; j < TOWER_PRODUCT_TASK_NUM; j++) {
             PointsNeeded.append(towerInfo[i].pointsNeeded[j]);
         }
-        _towervalue["PointsNeeded"] = PointsNeeded;
+        _towervalue[i]["PointsNeeded"] = PointsNeeded;
     }
+    result["towerInfo"] = _towervalue;
     return result;
+}
+
+void assert_same(const mapBlock &a, const mapBlock &b) {
+    assert((a.type == b.type));
+    assert((a.owner == b.owner));
+    assert((a.TowerIndex == b.TowerIndex));
+    assert((a.corps == b.corps));
+}
+
+void assert_same(const PlayerInfo &a, const PlayerInfo &b) {
+    assert(a.id == b.id);
+    assert(a.rank == b.rank);
+    assert(a.score == b.score);
+    assert(a.alive == b.alive);
+    assert(a.tower == b.tower);
+    assert(a.corps == b.corps);
+}
+
+void assert_same(const CorpsInfo &a, const CorpsInfo &b) {
+    assert(a.exist == b.exist);
+    assert(a.pos == b.pos);
+    assert(a.ID == b.ID);
+    assert(a.healthPoint == b.healthPoint);
+    assert(a.BuildPoint == b.BuildPoint);
+    assert(a.owner == b.owner);
+    assert(a.type == b.type);
+    assert(a.movePoint == b.movePoint);
+    assert(a.m_BattleType == b.m_BattleType);
+    assert(a.healthPoint == b.healthPoint);
+}
+
+void assert_same(const TowerInfo &a, const TowerInfo &b) {
+    assert(a.exist == b.exist);
+    assert(a.ID == b.ID);
+    assert(a.ownerID == b.ownerID);
+    assert(a.pos == b.pos);
+    assert(a.productPoint == b.productPoint);
+    assert(a.pdtType == b.pdtType);
+    assert(a.productConsume == b.productConsume);
+    assert(a.healthPoint == b.healthPoint);
+    assert(a.battlePoint == b.battlePoint);
+    assert(a.level == b.level);
+}
+
+void assert_same(const Game &a, const Game &b) {
+    // check map
+    assert(a.getHeight() == b.getHeight() && a.getWidth() == b.getWidth());
+    int w = a.getWidth(), h = a.getHeight();
+    for(int j = 0; j < w; j++) {
+        for(int i = 0; i < h; i++) {
+            assert_same(a.block({i, j}), b.block({i, j}));
+        }
+    }
+    // check info
+    // + size
+    assert(a.playerAlive == b.playerAlive);
+    assert(a.totalTowers == b.totalTowers);
+    assert(a.totalCorps == b.totalCorps);
+
+    // + player
+    assert(a.playerInfo.size() == b.playerInfo.size());
+    for(size_t i = 0; i < a.playerInfo.size(); i++) {
+        assert_same(a.playerInfo[i], b.playerInfo[i]);
+    }
+    // corp
+    assert(a.corpsInfo.size() == b.corpsInfo.size());
+    for(size_t i = 0; i < a.corpsInfo.size(); i++) {
+        assert_same(a.corpsInfo[i], b.corpsInfo[i]);
+    }
+
+    // tower
+    assert(a.towerInfo.size() == b.towerInfo.size());
+    for(size_t i = 0; i < a.towerInfo.size(); i++) {
+        assert_same(a.towerInfo[i], b.towerInfo[i]);
+    }
 }

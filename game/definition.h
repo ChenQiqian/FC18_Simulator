@@ -82,6 +82,7 @@ struct TPoint
 {
 	TPosition  m_x;
 	TPosition  m_y;
+
 };
 
 //【FC18】塔的配置数据结构体
@@ -151,7 +152,7 @@ enum CmdJsonNumber
 	JChangeTerrain = 9,
 	JProduct = 10,
 	JTowerAttackCorps = 11,
-	JTowerSttackTower = 12
+	// JTowerAttackTower = 12
 };
 
 //【FC18】兵团移动的方向
@@ -532,9 +533,7 @@ class PlayerInfo
 {
 public:
 	PlayerInfo(){};			 // 空构造函数 —— swm_sxt
-	PlayerInfo(TPlayerID _id) :id(_id), rank(_id), score(0), alive(true){
-
-	}
+	PlayerInfo(TPlayerID _id) :id(_id), rank(_id), score(0), alive(true){ }
 	PlayerInfo(Json::Value); // 从Json对象构造 —— swm_sxt
 	TPlayerID id;			 //【FC18】玩家的序号，请注意玩家序号从1开始，访问玩家数组请用[ID-1]
 	int rank;				 //【FC18】该选手排名
@@ -555,7 +554,7 @@ public:
 class mapBlock //【FC18】地图方格类
 {
 public:
-	mapBlock(){}
+	// mapBlock(){}
 	mapBlock(terrainType _type, int _owner, int _TowerIndex) :
 		type(_type), owner(_owner), TowerIndex(_TowerIndex)
 	{};			 // 空构造函数 —— swm_sxt
@@ -570,10 +569,14 @@ public:
 	Json::Value asJson() const;
 };
 
+// 简化傻逼 enum，哪个傻逼想出来的，祝他switch写到吐
+terrainType getTerrainEnum(int x);
+
 //常用数学运算
 //二维坐标减运算
 TPoint operator+(const TPoint &p1, const TPoint &p2);
 TPoint operator-(const TPoint &p1, const TPoint &p2);
+bool operator==(const TPoint &p1, const TPoint &p2);
 //计算欧式距离
 TLength getDistance(const TPoint &p1, const TPoint &p2);
 //计算FC18中塔攻击范围的距离（FC18距离）

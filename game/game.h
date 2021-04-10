@@ -14,8 +14,12 @@ class Game : public Info {
     vector<vector<mapBlock>> _gameMap_backup;  // 考虑到可能有塔变成平地的情况
 
   public:
-    Game();
-    Game(TMap _width, TMap _height, TPlayer _players, int _id);
+    // Game();
+    Game(TMap    _width,
+         TMap    _height,
+         TPlayer _players,
+         int     _id = 0,
+         bool    gen = false);
     Game(Json::Value json, bool isGame);
     Game(Info &info);
     ~Game();
@@ -23,10 +27,15 @@ class Game : public Info {
     TMap getWidth() const;
     //【FC18】获取地图高度
     TMap getHeight() const;
-    void generateMap();   // 生成地图的地形到 gameMap
-    void generateUser();  // 生成 playerInfo 数组
+    void generateMap();  // 生成地图的地形到 gameMap
+    void generateMap(vector<vector<int>> terrain,
+                           vector<vector<int>> owner,
+                           vector<vector<int>> towerid);
+    void copyToBackup(); // 为了避开 private 限制，很讨厌，但没办法
+
     void generateTower();  // 生成地图上最初的四个塔. 调用 addTower函数。
     mapBlock &block(TPoint p);  // 获取地图上的一个 block
+    const mapBlock &block(TPoint p)const;  // 获取地图上的一个 block (const 版本)
     // 辅助判定函数
     bool isPosValid(TPoint p);
     bool isPosValid(int x, int y);
@@ -76,6 +85,9 @@ class Game : public Info {
     Json::Value play(TPlayerID playerID, CommandList &todoCommandList);
     void        print();
     Json::Value asJson();
+    friend bool is_same(const Game &a, const Game &b);
 };
+
+void assert_same(const Game &a, const Game &b);
 
 #endif
