@@ -563,7 +563,9 @@ public:
 	vector<int> occupyPoint; //【FC18】各玩家的占有属性值，秩为玩家序号-1
 	int owner;				 //【FC18】所属玩家序号，-1为过渡TRANSITION，-2为公共PUBLIC
 	int TowerIndex;			 //@@@【FC18】位于该单元格的塔的下标，对应data里的myTowers，没有塔的时候为-1
-	vector<TCorpsID> corps;	 //该位置兵团
+	set<TCorpsID> corps;	 //该位置兵团
+	TCorpsID firCorp();
+	TCorpsID secCorp();
 
 	//转为Json对象 —— swm_sxt
 	Json::Value asJson() const;

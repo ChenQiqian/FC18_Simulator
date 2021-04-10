@@ -176,7 +176,6 @@ Json::Value PlayerInfo::asJson() const {
 
     return result;
 }
-
 mapBlock::mapBlock(Json::Value json) {
     type       = terrainType(json["type"].asInt());
     owner      = terrainType(json["owner"].asInt());
@@ -187,8 +186,16 @@ mapBlock::mapBlock(Json::Value json) {
     }
     corps.clear();
     for(unsigned int i = 0; i < json["corps"].size(); i++) {
-        corps.push_back(json["corps"][i].asInt());
+        corps.insert(json["corps"][i].asInt());
     }
+}
+TCorpsID mapBlock::firCorp(){
+    assert(corps.size() >= 1);
+    return *(corps.begin());
+}
+TCorpsID mapBlock::secCorp(){
+    assert(corps.size() >= 2);
+    return *(++corps.begin());
 }
 Json::Value mapBlock::asJson() const {
     Json::Value result;

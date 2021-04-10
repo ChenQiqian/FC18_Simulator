@@ -133,8 +133,8 @@ bool Game::canMove(TCorpsID cid, int dir) {
         return false;
     }
     if(block(dest).TowerIndex == -1 && block(dest).corps.size() == 1 &&
-       (!isMyCorps(corps.owner, block(dest).corps[0]) ||
-        corpsInfo[block(dest).corps[0]].type == corps.type)) {
+       (!isMyCorps(corps.owner, block(dest).firCorp()) ||
+        corpsInfo[block(dest).firCorp()].type == corps.type)) {
         return false;
     }
     if(needMoveCost(pos, dest) > corps.movePoint) {
@@ -193,13 +193,7 @@ void Game::deadCorps(TCorpsID cid) {
     CorpsInfo &corps = corpsInfo[cid];
     corps.exist      = false;
     // 地图
-    vector<int> &mapCorps = block(corps.pos).corps;
-    for(size_t i = 0; i < mapCorps.size(); i++) {
-        if(mapCorps[i] == cid) {
-            mapCorps.erase(mapCorps.begin() + i);
-            break;
-        }
-    }
+    block(corps.pos).corps.erase(cid);
     // 玩家
     playerInfo[corps.owner - 1].corps.erase(cid);
 }
@@ -213,7 +207,7 @@ void Game::getCorps(TCorpsID cid, TPlayerID pid) {
     totalCorps++;
     corps.exist = true;
     corps.owner = pid;
-    block(corps.pos).corps.push_back(cid);
+    block(corps.pos).corps.insert(cid);
     playerInfo[pid - 1].corps.insert(cid);
 }
 void Game::addTower(TPlayerID pid, TPoint p) {
@@ -236,7 +230,7 @@ void Game::addBattle(TPlayerID pid, TPoint p, battleCorpsType type) {
     corpsInfo.push_back({p, cid, pid, Battle, type, Explorer});
     totalCorps++;
     // update player
-    block(p).corps.push_back(cid);
+    block(p).corps.insert(cid);
     playerInfo[pid - 1].corps.insert(cid);
 }
 void Game::addConstruct(TPlayerID pid, TPoint p, constructCorpsType type) {
@@ -249,7 +243,7 @@ void Game::addConstruct(TPlayerID pid, TPoint p, constructCorpsType type) {
     corpsInfo.push_back({p, cid, pid, Construct, Archer, type});
     totalCorps++;
     // update player
-    block(p).corps.push_back(cid);
+    block(p).corps.insert(cid);
     playerInfo[pid - 1].corps.insert(cid);
 }
 void Game::changeTowerLevel(TTowerID tid, TLevel tarLevel, bool fullBlood) {
@@ -271,7 +265,7 @@ void Game::deadTower(TTowerID tid) {
     TowerInfo &tower = towerInfo[tid];
     tower.exist      = false;
     totalTowers--;
-    vector<int> _corp = block(tower.pos).corps;  // 不能传引用
+    set<int> _corp = block(tower.pos).corps;  // 不能传引用
     for(TCorpsID cid : _corp) {
         deadCorps(cid);
     }
@@ -378,8 +372,7 @@ void Game::towerAttackCorps(TowerInfo &tower, const vector<int> &par) {
     }
     if(tar.type == Construct) {
         if(block(tar.pos).corps.size() > 1) {
-            int real_tar = int(block(tar.pos).corps[0] != tarID);
-            real_tar     = block(tar.pos).corps[real_tar];
+            int real_tar = block(tar.pos).firCorp() == tarID ? block(tar.pos).secCorp() : block(tar.pos).firCorp();
             towerAttackCorps(tower, {TAttackCorps, tower.ID, real_tar});
         }
         else {
@@ -396,7 +389,7 @@ void Game::towerAttackCorps(TowerInfo &tower, const vector<int> &par) {
         if(tar.healthPoint < 0) {
             deadCorps(tarID);
             if(block(tar.pos).corps.size() >= 1) {
-                getCorps(block(tar.pos).corps[0], tower.ownerID);
+                getCorps(block(tar.pos).firCorp(), tower.ownerID);
             }
         }
     }
@@ -411,13 +404,8 @@ void Game::corpsMove(CorpsInfo &corps, const vector<int> &par) {
     }
     TPoint pos = corps.pos, dest = corps.pos + mp[par[2]];
     corps.pos = dest;
-    for(size_t i = 0; i < block(pos).corps.size(); i++) {
-        if(block(pos).corps[i] == corps.ID) {
-            block(pos).corps.erase(block(pos).corps.begin() + i);
-            break;
-        }
-    }
-    block(dest).corps.push_back(corps.ID);
+    block(pos).corps.erase(corps.ID);
+    block(dest).corps.insert(corps.ID);
     corps.movePoint -= needMoveCost(pos, dest);
 }
 void Game::corpsAttackCorps(CorpsInfo &corps, const vector<int> &par) {
@@ -445,8 +433,7 @@ void Game::corpsAttackCorps(CorpsInfo &corps, const vector<int> &par) {
     }
     if(tar.type == Construct) {
         if(block(tar.pos).corps.size() > 1) {
-            int real_tar = int(block(tar.pos).corps[0] != corps.ID);
-            real_tar     = block(tar.pos).corps[real_tar];
+            int real_tar = block(tar.pos).firCorp() == tarID ? block(tar.pos).firCorp() : block(tar.pos).secCorp();
             corpsAttackCorps(corps, {CAttackCorps, corps.ID, real_tar});
         }
         else {
@@ -467,7 +454,7 @@ void Game::corpsAttackCorps(CorpsInfo &corps, const vector<int> &par) {
         if(tar.healthPoint < 0) {
             deadCorps(tar.ID);
             if(block(tar.pos).corps.size() >= 1 && corps.exist) {
-                getCorps(block(tar.pos).corps[0], corps.owner);
+                getCorps(block(tar.pos).firCorp(), corps.owner);
             }
         }
     }
